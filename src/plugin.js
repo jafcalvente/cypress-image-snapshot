@@ -17,6 +17,7 @@ let snapshotRunning = false;
 const kebabSnap = '-snap.png';
 const dotSnap = '.snap.png';
 const dotDiff = '.diff.png';
+const dotScreenshot = '.screenshot.png';
 
 export const cachePath = path.join(
   pkgDir.sync(process.cwd()),
@@ -62,12 +63,10 @@ export function matchImageSnapshotPlugin({ path: screenshotPath }) {
       failureThresholdType = 'pixel',
       customSnapshotsDir,
       customDiffDir,
+      customScreenshotDir,
       ...options
     } = {},
   } = snapshotOptions;
-
-  const receivedImageBuffer = fs.readFileSync(screenshotPath);
-  fs.removeSync(screenshotPath);
 
   const { dir: screenshotDir, name: snapshotIdentifier } = path.parse(
     screenshotPath
@@ -92,9 +91,18 @@ export function matchImageSnapshotPlugin({ path: screenshotPath }) {
     : path.join(snapshotsDir, '__diff_output__');
   const diffDotPath = path.join(diffDir, `${snapshotIdentifier}${dotDiff}`);
 
+  const screenshotOutputDir = customScreenshotDir
+    ? path.join(process.cwd(), customScreenshotDir, relativePath)
+    : path.join(snapshotsDir, '__screenshot_output__');
+  const screenshotOutputDotPath = path.join(screenshotOutputDir, `${snapshotIdentifier}${dotScreenshot}`);
+
   if (fs.pathExistsSync(snapshotDotPath)) {
     fs.copySync(snapshotDotPath, snapshotKebabPath);
   }
+
+  const receivedImageBuffer = fs.readFileSync(screenshotPath);
+  fs.copySync(screenshotPath, screenshotOutputDotPath);
+  fs.removeSync(screenshotPath);
 
   snapshotResult = diffImageToSnapshot({
     snapshotsDir,
